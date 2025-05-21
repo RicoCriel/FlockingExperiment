@@ -2,18 +2,18 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ButtonController : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class ButtonController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public Action OnButtonHeld;
-    public Action OnButtonReleased;
+    public Action OnCursorEnter;
+    public Action OnCursorExit;
 
-    public void OnPointerDown(PointerEventData eventData)
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        OnButtonHeld?.Invoke();
+        OnCursorEnter?.Invoke();
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public void OnPointerExit(PointerEventData eventData)
     {
-        OnButtonReleased?.Invoke();
+        OnCursorExit?.Invoke();
     }
 }

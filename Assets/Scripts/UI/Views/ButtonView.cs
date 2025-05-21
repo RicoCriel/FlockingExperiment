@@ -14,15 +14,15 @@ public class ButtonView : MonoBehaviour
 
     private void OnEnable()
     {
-        _orbit.OnButtonHeld += _cameraController.RotateTarget;
-        _orbit.OnButtonReleased += _cameraController.StopRotating;
+        _orbit.OnCursorEnter += _cameraController.RotateTarget;
+        _orbit.OnCursorExit += _cameraController.StopRotating;
         _controlsButton.onClick.AddListener(ToggleControlPanel);
     }
 
     private void OnDisable()
     {
-        _orbit.OnButtonHeld -= _cameraController.RotateTarget;
-        _orbit.OnButtonReleased -= _cameraController.StopRotating;
+        _orbit.OnCursorEnter -= _cameraController.RotateTarget;
+        _orbit.OnCursorExit -= _cameraController.StopRotating;
         _controlsButton.onClick.RemoveListener(ToggleControlPanel);
     }
 

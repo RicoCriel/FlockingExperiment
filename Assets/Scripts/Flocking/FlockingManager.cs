@@ -72,12 +72,12 @@ public class FlockingManager : MonoBehaviour
 
         }
     }
-    private void OnDrawGizmos()
-    {
-        Bounds fishTankBounds = new Bounds(this.transform.position, SwimLimits * 2);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(this.transform.position, fishTankBounds.size);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(GoalPosition, 1f);
-    }
+    //private void OnDrawGizmos()
+    //{
+    //    Bounds fishTankBounds = new Bounds(this.transform.position, SwimLimits * 2);
+    //    Gizmos.color = Color.yellow;
+    //    Gizmos.DrawWireCube(this.transform.position, fishTankBounds.size);
+    //    Gizmos.color = Color.red;
+    //    Gizmos.DrawWireSphere(GoalPosition, 1f);
+    //}
 }

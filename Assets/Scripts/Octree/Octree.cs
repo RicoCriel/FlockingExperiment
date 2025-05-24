@@ -4,22 +4,22 @@ using UnityEngine;
 public class Octree
 {
     private OctreeNode _root;
-    private Dictionary<GameObject, OctreeNode> _objectToNodeMap;
+    private Dictionary<Transform, OctreeNode> _objectToNodeMap;
     private int _maxObjectsPerNode = 30;
 
     public Octree(Bounds bounds)
     {
         _root = new OctreeNode(bounds, _maxObjectsPerNode);
-        _objectToNodeMap = new Dictionary<GameObject, OctreeNode>();
+        _objectToNodeMap = new Dictionary<Transform, OctreeNode>();
     }
 
-    public void Insert(GameObject obj)
+    public void Insert(Transform obj)
     {
         OctreeNode node = _root.InsertAndReturnNode(obj);
         if (node != null) _objectToNodeMap[obj] = node;
     }
 
-    public void Remove(GameObject obj)
+    public void Remove(Transform obj)
     {
         if (_objectToNodeMap.TryGetValue(obj, out OctreeNode node))
         {
@@ -28,7 +28,7 @@ public class Octree
         }
     }
 
-    public void UpdatePosition(GameObject obj)
+    public void UpdatePosition(Transform obj)
     {
         if (!_objectToNodeMap.TryGetValue(obj, out OctreeNode currentNode)) return;
         if (!currentNode.Bounds.Contains(obj.transform.position))
@@ -38,10 +38,15 @@ public class Octree
         }
     }
 
-    public List<GameObject> QueryNeighbors(Vector3 point, float radius)
+    public List<Transform> QueryNeighbors(Vector3 point, float radius)
     {
-        List<GameObject> neighbors = new List<GameObject>();
+        List<Transform> neighbors = new List<Transform>();
         _root.QueryNeighbors(point, radius, neighbors);
         return neighbors;
     }
+
+    //public void DrawGizmos()
+    //{
+    //    _root.DrawGizmos();
+    //}
 }

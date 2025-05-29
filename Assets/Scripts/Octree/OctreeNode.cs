@@ -4,18 +4,18 @@ using UnityEngine;
 public class OctreeNode
 {
     public Bounds Bounds;
-    public List<Transform> Objects;
+    public List<GameObject> Objects;
     public OctreeNode[] Children;
     private int _maxObjects;
 
     public OctreeNode(Bounds bounds, int maxObjects)
     {
         Bounds = bounds;
-        Objects = new List<Transform>();
+        Objects = new List<GameObject>();
         _maxObjects = maxObjects;
     }
 
-    public void BatchInsert(List<Transform> objects)
+    public void BatchInsert(List<GameObject> objects)
     {
         foreach (var obj in objects)
         {
@@ -32,7 +32,7 @@ public class OctreeNode
         }
     }
 
-    public OctreeNode InsertAndReturnNode(Transform obj)
+    public OctreeNode InsertAndReturnNode(GameObject obj)
     {
         if (!Bounds.Contains(obj.transform.position)) return null;
 
@@ -72,7 +72,7 @@ public class OctreeNode
         }
 
         // Redistribute objects to children
-        List<Transform> objectsToMove = new List<Transform>(Objects);
+        List<GameObject> objectsToMove = new List<GameObject>(Objects);
         Objects.Clear();
         foreach (var obj in objectsToMove)
         {
@@ -80,7 +80,7 @@ public class OctreeNode
         }
     }
 
-    public void QueryNeighbors(Vector3 point, float radius, List<Transform> results)
+    public void QueryNeighbors(Vector3 point, float radius, List<GameObject> results)
     {
         float radiusSqr = radius * radius;
         Vector3 closestPoint = Bounds.ClosestPoint(point);
@@ -103,7 +103,7 @@ public class OctreeNode
         }
     }
 
-    public bool Remove(Transform obj)
+    public bool Remove(GameObject obj)
     {
         bool removed = Objects.Remove(obj);
         if (removed) return true;
@@ -116,19 +116,5 @@ public class OctreeNode
             }
         }
         return false;
-    }
-
-    public void DrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(Bounds.center, Bounds.size);
-
-        if (Children != null)
-        {
-            foreach (var child in Children)
-            {
-                child.DrawGizmos();
-            }
-        }
     }
 }

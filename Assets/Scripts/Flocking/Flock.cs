@@ -3,182 +3,190 @@ using UnityEngine;
 
 public class Flock : MonoBehaviour
 {
-    //private float _movementSpeed;
+    private float _movementSpeed;
+    private Bounds _fishTankBounds;
 
-    //public void Initialize(FlockingManager manager)
-    //{
-    //    _movementSpeed = Random.Range(manager.MinSpeed, manager.MaxSpeed);
-    //}
+    public void CreateBoundary(FlockingManager manager)
+    {
+        _fishTankBounds = new Bounds(manager.transform.position, manager.SwimLimits * 2);
+    }
 
-    //public void UpdateBehaviour(FlockingManager manager, Octree octree)
-    //{
-    //    HandleFishBoundery(manager);
-    //    ApplyFlockingRules(manager, octree);
-    //    MoveFish();
-    //}
+    public void Initialize(FlockingManager manager)
+    {
+        _movementSpeed = Random.Range(manager.MinSpeed, manager.MaxSpeed);
+    }
 
-    //private void MoveFish()
-    //{
-    //    this.transform.Translate(0, 0, _movementSpeed * Time.deltaTime);
-    //}
+    public void UpdateBehaviour(FlockingManager manager, Octree octree)
+    {
+        HandleFishBoundery(manager);
+        ApplyFlockingRules(manager, octree);
+        MoveFish();
+    }
 
-    //private void HandleFishBoundery(FlockingManager manager)
-    //{
-    //    if (!IsWithinBounds(manager))
-    //    {
-    //        RotateTowardsCenter(manager);
-    //    }
-    //}
+    private void MoveFish()
+    {
+        this.transform.Translate(0, 0, _movementSpeed * Time.deltaTime);
+    }
 
-    //private void ApplyFlockingRules(FlockingManager manager, Octree octree)
-    //{
-    //    if (manager == null || octree == null) return;
+    private void HandleFishBoundery(FlockingManager manager)
+    {
+        if (!IsWithinBounds())
+        {
+            RotateTowardsCenter(manager);
+        }
+    }
 
-    //    // Query the octree for neighbors within the neighbor distance
-    //    List<Transform> nearbyObjects = octree.QueryNeighbors(
-    //        this.transform.position,
-    //        manager.NeighbourDistance
-    //    );
+    private void ApplyFlockingRules(FlockingManager manager, Octree octree)
+    {
+        if (manager == null || octree == null) return;
 
-    //    // Convert GameObjects to Flock components (and skip self)
-    //    List<Flock> neighbors = new List<Flock>();
-    //    foreach (var obj in nearbyObjects)
-    //    {
-    //        Flock flock = obj.GetComponent<Flock>();
-    //        if (flock != null && flock != this)
-    //        {
-    //            neighbors.Add(flock);
-    //        }
-    //    }
+        // Query the octree for neighbors within the neighbor distance
+        List<GameObject> nearbyObjects = octree.QueryNeighbors(
+            this.transform.position,
+            manager.NeighbourDistance
+        );
 
-    //    Vector3 separation = CalculateSeparation(neighbors.ToArray());
-    //    Vector3 alignment = CalculateAlignment(neighbors.ToArray(), manager);
-    //    Vector3 cohesion = CalculateCohesion(neighbors.ToArray(), manager);
+        // Convert GameObjects to Flock components (and skip self)
+        List<Flock> neighbors = new List<Flock>();
+        foreach (var obj in nearbyObjects)
+        {
+            Flock flock = obj.GetComponent<Flock>();
+            if (flock != null && flock != this)
+            {
+                neighbors.Add(flock);
+            }
+        }
 
-    //    Vector3 direction =
-    //    separation * manager.SeparationWeight +
-    //    alignment * manager.AlignmentWeight +
-    //    cohesion * manager.CohesionWeight;
+        // Use neighbors instead of manager.AllFish
+        Vector3 separation = CalculateSeparation(neighbors.ToArray());
+        Vector3 alignment = CalculateAlignment(neighbors.ToArray(), manager);
+        Vector3 cohesion = CalculateCohesion(neighbors.ToArray(), manager);
 
-    //    if (direction != Vector3.zero)
-    //    {
-    //        this.transform.rotation = Quaternion.Slerp(
-    //            this.transform.rotation,
-    //            Quaternion.LookRotation(direction),
-    //            manager.RotationSpeed * Time.deltaTime
-    //        );
-    //    }
-    //}
+        Vector3 direction =
+        separation * manager.SeparationWeight +
+        alignment * manager.AlignmentWeight +
+        cohesion * manager.CohesionWeight;
 
-    //private Vector3 CalculateSeparation(Flock[] neighbors)
-    //{
-    //    Vector3 separationVector = Vector3.zero;
-    //    int avoidCount = 0;
+        if (direction != Vector3.zero)
+        {
+            this.transform.rotation = Quaternion.Slerp(
+                this.transform.rotation,
+                Quaternion.LookRotation(direction),
+                manager.RotationSpeed * Time.deltaTime
+            );
+        }
+    }
 
-    //    foreach (Flock fish in neighbors)
-    //    {
-    //        if (fish == this) continue;
+    private Vector3 CalculateSeparation(Flock[] neighbors)
+    {
+        Vector3 separationVector = Vector3.zero;
+        int avoidCount = 0;
 
-    //        float distance = (fish.transform.position - this.transform.position).sqrMagnitude;
-    //        if (distance < 1.0f)
-    //        {
-    //            separationVector += (this.transform.position - fish.transform.position);
-    //            avoidCount++;
-    //        }
-    //    }
+        foreach (Flock fish in neighbors)
+        {
+            if (fish == this) continue;
 
-    //    if (avoidCount > 0)
-    //    {
-    //        separationVector /= avoidCount;
-    //    }
+            float distance = (fish.transform.position - this.transform.position).sqrMagnitude;
+            if (distance < 1.0f)
+            {
+                separationVector += (this.transform.position - fish.transform.position);
+                avoidCount++;
+            }
+        }
 
-    //    return separationVector;
-    //}
+        if (avoidCount > 0)
+        {
+            separationVector /= avoidCount;
+        }
 
-    //private Vector3 CalculateAlignment(Flock[] neighbors, FlockingManager manager)
-    //{
-    //    Vector3 alignmentVector = Vector3.zero;
-    //    int alignmentCount = 0;
+        return separationVector;
+    }
 
-    //    foreach (Flock fish in neighbors)
-    //    {
-    //        if (fish == this) continue;
+    private Vector3 CalculateAlignment(Flock[] neighbors, FlockingManager manager)
+    {
+        Vector3 alignmentVector = Vector3.zero;
+        int alignmentCount = 0;
 
-    //        Vector3 toNeighbor = fish.transform.position - this.transform.position;
-    //        float distance = toNeighbor.sqrMagnitude;
+        foreach (Flock fish in neighbors)
+        {
+            if (fish == this) continue;
 
-    //        if (distance <= manager.NeighbourDistance * manager.NeighbourDistance)
-    //        {
-    //            float angle = Vector3.Angle(this.transform.forward, toNeighbor);
-    //            if (angle <= manager.ViewingAngle * 0.5f)
-    //            {
-    //                alignmentVector += fish.transform.forward;
-    //                alignmentCount++;
-    //            }
-    //        }
-    //    }
+            Vector3 toNeighbor = fish.transform.position - this.transform.position;
+            float distance = toNeighbor.sqrMagnitude;
 
-    //    if (alignmentCount > 0)
-    //    {
-    //        alignmentVector /= alignmentCount;
-    //    }
+            if (distance <= manager.NeighbourDistance * manager.NeighbourDistance)
+            {
+                float angle = Vector3.Angle(this.transform.forward, toNeighbor);
+                if (angle <= manager.ViewingAngle * 0.5f)
+                {
+                    alignmentVector += fish.transform.forward;
+                    alignmentCount++;
+                }
+            }
+        }
 
-    //    return alignmentVector;
-    //}
+        if (alignmentCount > 0)
+        {
+            alignmentVector /= alignmentCount;
+        }
 
-    //private Vector3 CalculateCohesion(Flock[] neighbors, FlockingManager manager)
-    //{
-    //    Vector3 center = Vector3.zero;
-    //    int groupSize = 0;
-    //    float totalSpeed = 0f;
+        return alignmentVector;
+    }
 
-    //    foreach (Flock fish in neighbors)
-    //    {
-    //        if (fish == this) continue;
+    private Vector3 CalculateCohesion(Flock[] neighbors, FlockingManager manager)
+    {
+        Vector3 center = Vector3.zero;
+        int groupSize = 0;
+        float totalSpeed = 0f;
 
-    //        Vector3 toNeighbor = fish.transform.position - this.transform.position;
-    //        float distance = toNeighbor.sqrMagnitude;
+        foreach (Flock fish in neighbors)
+        {
+            if (fish == this) continue;
 
-    //        if (distance <= manager.NeighbourDistance * manager.NeighbourDistance)
-    //        {
-    //            float angle = Vector3.Angle(this.transform.forward, toNeighbor);
-    //            if (angle <= manager.ViewingAngle * 0.5f)
-    //            {
-    //                center += fish.transform.position;
-    //                groupSize++;
-    //                totalSpeed += fish._movementSpeed;
-    //            }
-    //        }
-    //    }
+            Vector3 toNeighbor = fish.transform.position - this.transform.position;
+            float distance = toNeighbor.sqrMagnitude;
 
-    //    if (groupSize > 0)
-    //    {
-    //        center /= groupSize;
-    //        float averageSpeed = totalSpeed / groupSize;
-    //        _movementSpeed = Mathf.Clamp(averageSpeed, manager.MinSpeed, manager.MaxSpeed);
+            if (distance <= manager.NeighbourDistance * manager.NeighbourDistance)
+            {
+                float angle = Vector3.Angle(this.transform.forward, toNeighbor);
+                if (angle <= manager.ViewingAngle * 0.5f)
+                {
+                    center += fish.transform.position;
+                    groupSize++;
+                    totalSpeed += fish._movementSpeed;
+                }
+            }
+        }
 
-    //        return (center - this.transform.position); 
-    //    }
+        if (groupSize > 0)
+        {
+            center /= groupSize;
+            float averageSpeed = totalSpeed / groupSize;
+            _movementSpeed = Mathf.Clamp(averageSpeed, manager.MinSpeed, manager.MaxSpeed);
 
-    //    return Vector3.zero;
-    //}
+            return (center - this.transform.position); 
+        }
 
-    //private void RotateTowardsCenter(FlockingManager manager)
-    //{
-    //    Vector3 direction = manager.transform.position - this.transform.position;
-    //    this.transform.rotation = Quaternion.Slerp(this.transform.rotation, Quaternion.LookRotation(direction),
-    //                                                                        manager.RotationSpeed * Time.deltaTime);
-    //}
+        return Vector3.zero;
+    }
 
-    //private bool IsWithinBounds(FlockingManager manager)
-    //{
-    //    return manager.FishTankBounds.Contains(this.transform.position);
-    //}
+    private void RotateTowardsCenter(FlockingManager manager)
+    {
+        //TO DO: Create center position instead of manager.transform.position
+        Vector3 direction = manager.transform.position - this.transform.position;
+        this.transform.rotation = Quaternion.Slerp(this.transform.rotation, Quaternion.LookRotation(direction),
+                                                                            manager.RotationSpeed * Time.deltaTime);
+    }
 
-    //private void RecalculateSpeed(FlockingManager manager)
-    //{
-    //    _movementSpeed = Random.Range(manager.MinSpeed, manager.MaxSpeed);
-    //}
+    private bool IsWithinBounds()
+    {
+        return _fishTankBounds.Contains(this.transform.position);
+    }
+
+    private void RecalculateSpeed(FlockingManager manager)
+    {
+        _movementSpeed = Random.Range(manager.MinSpeed, manager.MaxSpeed);
+    }
 
     
 

@@ -1,4 +1,5 @@
-using Unity.VisualScripting;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class FlockingManager : MonoBehaviour
@@ -7,106 +8,118 @@ public class FlockingManager : MonoBehaviour
     [SerializeField] private GameObject _fishPrefab;
     private GameObject[] _allFishObjects;
 
-    [Range(0,50000)]
+    [Range(0, 10000)]
     [SerializeField] private int _numberOfFish;
     private Flock[] _flockMembers;
-    public Flock[] AllFish => _flockMembers;
 
-    [Header("Fish boundery")]
+    [Header("Fish boundary")]
     [SerializeField] private Vector3 _swimLimits;
-    public Vector3 SwimLimits { get { return _swimLimits; } }
+    public Vector3 SwimLimits => _swimLimits;
+    public float NeighbourDistanceSqr => NeighbourDistance * NeighbourDistance;
 
     [Header("Behaviour Settings")]
-    [Range(0.1f, 5f)]
-    public float MinSpeed;
-    [Range(1f, 5f)]
-    public float MaxSpeed;
-    [Range(1f, 10f)]
-    public float NeighbourDistance;
-    [Range(1f, 5f)]
-    public float RotationSpeed;
-    [Range(1f, 180f)]
-    [SerializeField] private float _viewingAngle;
-    [Range(1f, 10f)]
-    [SerializeField] private float _separationWeight;
-    [Range(1f, 10f)]
-    [SerializeField] private float _cohesionWeight;
-    [Range(1f, 10f)]
-    [SerializeField] private float _alignmentWeight;
+    [Range(0.1f, 5f)] public float MinSpeed;
+    [Range(1f, 5f)] public float MaxSpeed;
+    [Range(1f, 10f)] public float NeighbourDistance;
+    [Range(1f, 5f)] public float RotationSpeed;
+    [Range(1f, 360f)] public float ViewingAngle;
+    [Range(1f, 10f)] public float SeparationWeight;
+    [Range(1f, 10f)] public float CohesionWeight;
+    [Range(1f, 10f)] public float AlignmentWeight;
 
-    public float ViewingAngle { get { return _viewingAngle; } }
-    public float SeparationWeight { get { return _separationWeight; } }
-    public float CohesionWeight { get { return _cohesionWeight; } }
-    public float AlignmentWeight { get { return _alignmentWeight; } }
-
-    [Header("Goal Location")]
-    public Vector3 GoalPosition = Vector3.zero;
-
+    [Header("Spatial Partitioning")]
     private Octree _octree;
+    private Dictionary<GameObject, Flock> _fishToFlockMap = new();
+
+    public bool TryGetFlock(GameObject fish, out Flock flock) =>
+        _fishToFlockMap.TryGetValue(fish, out flock);
+
+    private Coroutine _batchSpawningRoutine;
 
     private void Start()
     {
-        Bounds tankBounds = new Bounds(this.transform.position, _swimLimits * 2);
+        Bounds tankBounds = new(transform.position, _swimLimits * 2);
         _octree = new Octree(tankBounds);
-        SpawnFish();
+        _batchSpawningRoutine = StartCoroutine(SpawnFishCoroutine());
     }
 
     private void Update()
     {
-        // Update fish positions in the octree
+        // Update octree only for fish that moved significantly
         foreach (var fish in _allFishObjects)
         {
-            _octree.UpdatePosition(fish);
-        }
-
-        // Pass the octree to each fish
-        foreach (var fish in _flockMembers)
-        {
-            fish.UpdateBehaviour(this, _octree); 
-        }
-    }
-
-    private void SpawnFish()
-    {
-        if (_fishPrefab.GetComponent<Flock>() == null)
-        {
-            Debug.LogError("Fish prefab is missing the Flock component!");
-            return;
-        }
-
-        _allFishObjects = new GameObject[_numberOfFish];
-        _flockMembers = new Flock[_numberOfFish];
-
-        GoalPosition = this.transform.position;
-
-        for (int i = 0; i < _numberOfFish; i++)
-        {
-            Vector3 spawnPosition = this.transform.position + new Vector3(Random.Range(-SwimLimits.x, SwimLimits.x),
-                                                                     Random.Range(-SwimLimits.y, SwimLimits.y),
-                                                                     Random.Range(-SwimLimits.z, SwimLimits.z));
-
-            _allFishObjects[i] = Instantiate(_fishPrefab, spawnPosition, Quaternion.identity);
-            if (_allFishObjects[i].TryGetComponent<Flock>(out Flock flockMember))
+            if (fish != null)
             {
-                _flockMembers[i] = flockMember; 
-                flockMember.CreateBoundary(this);
-                flockMember.Initialize(this);
+                var flock = fish.GetComponent<Flock>();
+                _octree.UpdatePosition(fish, flock.LastPosition);
+                flock.UpdateLastPosition();
             }
         }
 
-        // Insert new fish into the octree
-        foreach (var fishObj in _allFishObjects)
+        // Update fish behavior
+        foreach (var fish in _flockMembers)
         {
-            _octree.Insert(fishObj);
+            fish?.UpdateBehaviour(this, _octree);
         }
     }
 
-    private void OnDrawGizmos()
+    private IEnumerator SpawnFishCoroutine()
     {
-        Bounds fishTankBounds = new Bounds(this.transform.position, SwimLimits * 2);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(this.transform.position, fishTankBounds.size);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(GoalPosition, 1f);
+        _allFishObjects = new GameObject[_numberOfFish];
+        _flockMembers = new Flock[_numberOfFish];
+        _fishToFlockMap.Clear();
+
+        int batchSize = 100; // Spawn in batches to avoid freezing
+        List<GameObject> currentBatch = new();
+
+        for (int i = 0; i < _numberOfFish; i++)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(
+                Random.Range(-_swimLimits.x, _swimLimits.x),
+                Random.Range(-_swimLimits.y, _swimLimits.y),
+                Random.Range(-_swimLimits.z, _swimLimits.z));
+
+            var fish = Instantiate(_fishPrefab, spawnPosition, Quaternion.identity);
+            _allFishObjects[i] = fish;
+
+            if (fish.TryGetComponent<Flock>(out var flockMember))
+            {
+                _flockMembers[i] = flockMember;
+                flockMember.CreateBoundary(this);
+                flockMember.Initialize(this);
+                _fishToFlockMap[fish] = flockMember;
+            }
+
+            currentBatch.Add(fish);
+
+            // Batch insert every 100 fish
+            if (currentBatch.Count >= batchSize || i == _numberOfFish - 1)
+            {
+                _octree.BatchInsert(currentBatch);
+                currentBatch.Clear();
+                yield return null; // Spread workload across frames
+            }
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (_octree != null) DrawOctree(_octree._root);
+    }
+
+    private void DrawOctree(OctreeNode node)
+    {
+        if (node == null) return;
+
+        Gizmos.color = Color.Lerp(Color.green, Color.red, node.Objects.Count / 10f);
+        Gizmos.DrawWireCube(node.Bounds.center, node.Bounds.size);
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                DrawOctree(child);
+            }
+        }
     }
 }

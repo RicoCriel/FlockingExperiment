@@ -1,60 +1,45 @@
 ﻿using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
+
+public struct OctreeData
+{
+    public float3 Position;
+    public int Index;
+}
 
 public class Octree
 {
-    internal OctreeNode _root;
-    private readonly Dictionary<GameObject, OctreeNode> _objectToNodeMap;
-    private readonly int _maxObjectsPerNode = 10; 
-    private readonly float _minNodeSize = 0.5f;
+    private OctreeNode _root;
+    private readonly int _maxObjectsPerNode;
+    private readonly float _minNodeSize;
 
-    public Octree(Bounds bounds)
+    public Octree(Bounds bounds, int maxObjectsPerNode = 10, float minNodeSize = 0.5f)
     {
-        _root = new OctreeNode(bounds, _maxObjectsPerNode, _minNodeSize);
-        _objectToNodeMap = new Dictionary<GameObject, OctreeNode>();
+        _root = new OctreeNode(bounds, maxObjectsPerNode, minNodeSize);
+        _maxObjectsPerNode = maxObjectsPerNode;
+        _minNodeSize = minNodeSize;
     }
 
-    public void Insert(GameObject obj)
+    public void Rebuild(NativeArray<Matrix4x4> fishData)
     {
-        OctreeNode node = _root.InsertAndReturnNode(obj);
-        if (node != null) _objectToNodeMap[obj] = node;
-    }
+        _root = new OctreeNode(_root.Bounds, _maxObjectsPerNode, _minNodeSize);
 
-    public void BatchInsert(IEnumerable<GameObject> objects)
-    {
-        foreach (var obj in objects)
+        for (int i = 0; i < fishData.Length; i++)
         {
-            Insert(obj);
-        }
-    }
-
-    public void Remove(GameObject obj)
-    {
-        if (_objectToNodeMap.TryGetValue(obj, out OctreeNode node))
-        {
-            node.Remove(obj);
-            _objectToNodeMap.Remove(obj);
-            node.TryCollapse();
-        }
-    }
-
-    public void UpdatePosition(GameObject obj, Vector3 lastPosition)
-    {
-        // Only update if moved a lot
-        if ((obj.transform.position - lastPosition).sqrMagnitude < 0.01f) return;
-
-        if (_objectToNodeMap.TryGetValue(obj, out OctreeNode currentNode))
-        {
-            if (!currentNode.Bounds.Contains(obj.transform.position))
+            var fish = new OctreeData
             {
-                Remove(obj);
-                Insert(obj);
-            }
+                Position = fishData[i].GetPosition(),
+                Index = i
+            };
+            _root.Insert(fish);
         }
     }
 
-    public void QueryNeighbors(Vector3 point, float radius, List<GameObject> results)
+    public void QueryNeighbors(float3 position, float radius, NativeList<int> results)
     {
-        _root.QueryNeighbors(point, radius, results);
+        _root.QueryNeighbors(position, radius, results);
     }
 }
+

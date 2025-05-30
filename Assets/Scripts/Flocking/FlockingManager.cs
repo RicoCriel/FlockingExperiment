@@ -1,125 +1,248 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using Unity.Burst;
+using Unity.Jobs;
+using System.Collections.Generic;
+using System.Collections;
+using Unity.Collections;
+using Unity.Mathematics;
+using System.Threading.Tasks;
+using System;
 
 public class FlockingManager : MonoBehaviour
 {
-    [Header("Fish spawning settings")]
-    [SerializeField] private GameObject _fishPrefab;
-    private GameObject[] _allFishObjects;
+    [SerializeField] private Mesh _mesh;
+    [SerializeField] private Material _material;
 
-    [Range(0, 10000)]
-    [SerializeField] private int _numberOfFish;
-    private Flock[] _flockMembers;
-
-    [Header("Fish boundary")]
+    [Range(0,1f)]
+    [SerializeField] private float _turnSpeed;
+    [Range(0,10f)]
+    [SerializeField] private float _moveSpeed;
+    [Range(0, 100000)]
+    [SerializeField] private int _maxPopulation;
+    [Range(0,500)]
+    [SerializeField] private int _numberOfNeighbors;
+    [Range(0,10f)]
+    [SerializeField] private float _schoolRadius;
+    [Range(0, 1f)]
+    [SerializeField] private float _agility;
+    [Range(0, 10f)]
+    [SerializeField] private float _alignmentWeight;
+    [Range(0, 10f)]
+    [SerializeField] private float _seperationWeight;
+    [Range(0, 10f)]
+    [SerializeField] private float _cohesionWeight;
+    [Range(0, 360f)]
+    [SerializeField] private float _visionAngle;
+    [Range(0, 10f)]
+    [SerializeField] private float _visionDistance;
+    [SerializeField] private Transform _goal;
     [SerializeField] private Vector3 _swimLimits;
-    public Vector3 SwimLimits => _swimLimits;
-    public float NeighbourDistanceSqr => NeighbourDistance * NeighbourDistance;
+    [Range(0,0.5f)]
+    [SerializeField] private float _tickDelay;
 
-    [Header("Behaviour Settings")]
-    [Range(0.1f, 5f)] public float MinSpeed;
-    [Range(1f, 5f)] public float MaxSpeed;
-    [Range(1f, 10f)] public float NeighbourDistance;
-    [Range(1f, 5f)] public float RotationSpeed;
-    [Range(1f, 360f)] public float ViewingAngle;
-    [Range(1f, 10f)] public float SeparationWeight;
-    [Range(1f, 10f)] public float CohesionWeight;
-    [Range(1f, 10f)] public float AlignmentWeight;
+    private List<Matrix4x4> _fishTRS;
+    private NativeList<Matrix4x4> _fishDataContainer;
+    private JobHandle _handle;
+    private Unity.Mathematics.Random _random;
 
-    [Header("Spatial Partitioning")]
-    private Octree _octree;
-    private Dictionary<GameObject, Flock> _fishToFlockMap = new();
-
-    public bool TryGetFlock(GameObject fish, out Flock flock) =>
-        _fishToFlockMap.TryGetValue(fish, out flock);
-
-    private Coroutine _batchSpawningRoutine;
-
-    private void Start()
+    private void Awake()
     {
-        Bounds tankBounds = new(transform.position, _swimLimits * 2);
-        _octree = new Octree(tankBounds);
-        _batchSpawningRoutine = StartCoroutine(SpawnFishCoroutine());
+        _fishTRS = new List<Matrix4x4>();
+
+        for (int i = 0; i < _maxPopulation; i++)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(
+                UnityEngine.Random.Range(-_swimLimits.x, _swimLimits.x),
+                UnityEngine.Random.Range(-_swimLimits.y, _swimLimits.y),
+                UnityEngine.Random.Range(-_swimLimits.z, _swimLimits.z));
+            AddFish(spawnPosition, Quaternion.identity, 1);
+        }
+        _random = new Unity.Mathematics.Random(1122);
+        _fishDataContainer = new NativeList<Matrix4x4>(1, Allocator.Persistent);
+        StartCoroutine(Tick());
     }
 
     private void Update()
     {
-        // Update octree only for fish that moved significantly
-        foreach (var fish in _allFishObjects)
+        if (_fishTRS.Count > 0)
         {
-            if (fish != null)
-            {
-                var flock = fish.GetComponent<Flock>();
-                _octree.UpdatePosition(fish, flock.LastPosition);
-                flock.UpdateLastPosition();
-            }
-        }
-
-        // Update fish behavior
-        foreach (var fish in _flockMembers)
-        {
-            fish?.UpdateBehaviour(this, _octree);
+            Graphics.DrawMeshInstanced(_mesh, 0, _material, _fishTRS);
         }
     }
 
-    private IEnumerator SpawnFishCoroutine()
+    private void AddFish(Vector3 pos, Quaternion rot, float scale)
     {
-        _allFishObjects = new GameObject[_numberOfFish];
-        _flockMembers = new Flock[_numberOfFish];
-        _fishToFlockMap.Clear();
+        _fishTRS.Add(Matrix4x4.TRS(pos, rot, Vector3.one * scale));
+    }
 
-        int batchSize = 100; // Spawn in batches to avoid freezing
-        List<GameObject> currentBatch = new();
-
-        for (int i = 0; i < _numberOfFish; i++)
+    IEnumerator Tick()
+    {
+        float lastTick = Time.time;
+        while (true)
         {
-            Vector3 spawnPosition = transform.position + new Vector3(
-                Random.Range(-_swimLimits.x, _swimLimits.x),
-                Random.Range(-_swimLimits.y, _swimLimits.y),
-                Random.Range(-_swimLimits.z, _swimLimits.z));
+            _fishDataContainer.SetCapacity(_fishTRS.Count);
+            NativeArray<Matrix4x4> temp = new NativeArray<Matrix4x4>(_fishTRS.ToArray(), Allocator.TempJob);
+            _fishDataContainer.CopyFrom(temp);
+            temp.Dispose();
+            yield return new WaitForFixedUpdate();
 
-            var fish = Instantiate(_fishPrefab, spawnPosition, Quaternion.identity);
-            _allFishObjects[i] = fish;
-
-            if (fish.TryGetComponent<Flock>(out var flockMember))
+            UpdateBehaviourJob job = new UpdateBehaviourJob()
             {
-                _flockMembers[i] = flockMember;
-                flockMember.CreateBoundary(this);
-                flockMember.Initialize(this);
-                _fishToFlockMap[fish] = flockMember;
-            }
+                DeltaTime = Time.time - lastTick,
+                MoveSpeed = _moveSpeed,
+                FishDataContainer = _fishDataContainer,
+                Random = _random,
+                NumberOfNeighbors = _numberOfNeighbors,
+                GoalPosition = _goal.position,
+                SchoolRadius = _schoolRadius,
+                SchoolUp = transform.up,
+                Agility = _agility,
+                AlignmentWeight = _alignmentWeight,
+                CohesionWeight = _cohesionWeight,
+                SeperationWeight = _seperationWeight,
+                VisionAngle = _visionAngle,
+                VisionDistance = _visionDistance,
+            };
 
-            currentBatch.Add(fish);
+            lastTick = Time.time;
+            _handle = job.Schedule(_fishTRS.Count, 8);
+            yield return new WaitUntil(() => _handle.IsCompleted);
+            _handle.Complete();
 
-            // Batch insert every 100 fish
-            if (currentBatch.Count >= batchSize || i == _numberOfFish - 1)
+            Parallel.For(0, _fishTRS.Count, (i) =>
             {
-                _octree.BatchInsert(currentBatch);
-                currentBatch.Clear();
-                yield return null; // Spread workload across frames
-            }
+                _fishTRS[i] = _fishDataContainer[i];
+            });
+
+            yield return new WaitForSeconds(_tickDelay);
         }
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDestroy()
     {
-        if (_octree != null) DrawOctree(_octree._root);
+        _handle.Complete();
+        if (_fishDataContainer.IsCreated)
+        {
+            _fishDataContainer.Dispose();
+        }
     }
 
-    private void DrawOctree(OctreeNode node)
+    [BurstCompile]
+    public struct UpdateBehaviourJob : IJobParallelFor
     {
-        if (node == null) return;
+        [NativeDisableParallelForRestriction] public NativeList<Matrix4x4> FishDataContainer;
 
-        Gizmos.color = Color.Lerp(Color.green, Color.red, node.Objects.Count / 10f);
-        Gizmos.DrawWireCube(node.Bounds.center, node.Bounds.size);
+        [ReadOnly] public Unity.Mathematics.Random Random;
+        [ReadOnly] public float MoveSpeed;
+        [ReadOnly] public float DeltaTime;
+        [ReadOnly] public int NumberOfNeighbors;
+        [ReadOnly] public float3 GoalPosition;
+        [ReadOnly] public float SchoolRadius;
+        [ReadOnly] public float3 SchoolUp;
+        [ReadOnly] public float Agility;
+        [ReadOnly] public float AlignmentWeight;
+        [ReadOnly] public float SeperationWeight;
+        [ReadOnly] public float CohesionWeight;
+        [ReadOnly] public float VisionAngle;
+        [ReadOnly] public float VisionDistance;
 
-        if (node.Children != null)
+        public void Execute(int index)
         {
-            foreach (var child in node.Children)
+            Matrix4x4 fishTRS = FishDataContainer[index];
+
+            float3 position = fishTRS.GetPosition();
+            Quaternion rotation = fishTRS.rotation;
+            float3 scale = fishTRS.lossyScale;
+
+            float3 fishForward = math.mul(rotation, new float3(0, 0, 1));
+            float3 fishUp = math.mul(rotation, new float3(0, 1, 0));
+            position += fishForward * MoveSpeed * DeltaTime;
+
+            float3 separation = float3.zero;
+            float3 alignment = float3.zero;
+            float3 cohesion = float3.zero;
+            float3 centerOfMass = float3.zero;
+            float3 averageForward = float3.zero;
+            int actualNeighbors = 0;
+
+            int startIndex = Random.NextInt(0, FishDataContainer.Length);
+            int endIndex = math.clamp(startIndex + NumberOfNeighbors, 0, FishDataContainer.Length);
+            float cosVisionAngle = math.cos(math.radians(VisionAngle * 0.5f));
+            float sqrVisionDist = VisionDistance * VisionDistance;
+
+            for (int i = startIndex; i < endIndex; i++)
             {
-                DrawOctree(child);
+                if (i == index) continue;
+
+                Matrix4x4 neighborTRS = FishDataContainer[i];
+                float3 neighborPos = neighborTRS.GetPosition();
+                float3 toNeighbor = neighborPos - position;
+                float distSqr = math.lengthsq(toNeighbor);
+
+                if (distSqr < 1e-4f || distSqr > sqrVisionDist) continue;
+
+                float3 dirToNeighbor = math.normalize(toNeighbor);
+                float dot = math.dot(fishForward, dirToNeighbor);
+                if (dot < cosVisionAngle) continue;
+
+                float distance = math.sqrt(distSqr);
+                float3 neighborForward = math.mul(neighborTRS.rotation, new float3(0, 0, 1));
+                averageForward += neighborForward;
+                centerOfMass += neighborPos;
+
+                float3 away = (position - neighborPos) / distance;
+                separation += away * EaseAwayFromDirection(distance);
+
+                actualNeighbors++;
             }
+
+            float3 targetDirection;
+
+            if (actualNeighbors > 0)
+            {
+                alignment = math.normalize(averageForward / actualNeighbors);
+                float3 center = centerOfMass / actualNeighbors;
+                cohesion = math.normalize(center - position);
+
+                targetDirection = math.normalize(
+                    separation * SeperationWeight +
+                    alignment * AlignmentWeight +
+                    cohesion * CohesionWeight
+                );
+            }
+            else
+            {
+                // No neighbors seen — rotate toward goal
+                float3 toGoal = GoalPosition - position;
+                targetDirection = math.normalize(toGoal);
+            }
+
+            if (math.lengthsq(targetDirection) < 0.01f)
+                targetDirection = fishForward;
+
+            // Blend towards goal more the farther away the fish is
+            float distanceFromGoal = math.length(GoalPosition - position);
+            float goalWeight = math.saturate(distanceFromGoal / SchoolRadius);
+
+            float3 goHomeDir = math.normalize(GoalPosition - position);
+            float3 blendedDir = math.normalize(math.lerp(targetDirection, goHomeDir, goalWeight * 0.95f));
+
+            Quaternion targetRotation = Quaternion.LookRotation(blendedDir, SchoolUp);
+            rotation = Quaternion.Slerp(rotation, targetRotation, Agility);
+
+            FishDataContainer[index] = Matrix4x4.TRS(position, rotation, scale);
+        }
+
+        private float EaseAwayFromDirection(float d)
+        {
+            return 1 / (1 + d);
         }
     }
 }
+
+
+
+
+
+
+

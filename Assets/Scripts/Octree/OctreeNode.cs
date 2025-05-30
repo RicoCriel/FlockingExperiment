@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class OctreeNode
 {
     public Bounds Bounds;
-    public List<GameObject> Objects;
+    public List<OctreeData> Objects;
     public OctreeNode[] Children;
     private float _minSize;
     private int _maxObjects;
@@ -12,43 +14,36 @@ public class OctreeNode
     public OctreeNode(Bounds bounds, int maxObjects, float minSize)
     {
         Bounds = bounds;
-        Objects = new List<GameObject>();
+        Objects = new List<OctreeData>();
         _maxObjects = maxObjects;
         _minSize = minSize;
     }
 
-    public OctreeNode InsertAndReturnNode(GameObject obj)
+    public void Insert(OctreeData fish)
     {
-        if (obj == null) return null;
-        if (!Bounds.Contains(obj.transform.position)) return null;
+        if (!Bounds.Contains(fish.Position)) return;
 
         if (Children == null)
         {
-            Objects.Add(obj);
+            Objects.Add(fish);
             if (Objects.Count > _maxObjects && Bounds.size.x > _minSize * 2)
             {
                 Subdivide();
             }
-            return this;
         }
         else
         {
             foreach (var child in Children)
             {
-                OctreeNode insertedNode = child.InsertAndReturnNode(obj);
-                if (insertedNode != null) return insertedNode;
+                child.Insert(fish);
             }
-            // Fallback: object stays in parent node
-            Objects.Add(obj);
-            return this;
         }
     }
 
-    public void Subdivide()
+    private void Subdivide()
     {
         Vector3 size = Bounds.size / 2f;
-        if (size.x < _minSize || size.y < _minSize || size.z < _minSize)
-            return;
+        if (size.x < _minSize) return;
 
         Children = new OctreeNode[8];
         Vector3 center = Bounds.center;
@@ -61,88 +56,58 @@ public class OctreeNode
                 (i & 4) == 0 ? -size.z / 2 : size.z / 2
             );
 
-            Bounds childBounds = new Bounds(center + offset, size);
-            Children[i] = new OctreeNode(childBounds, _maxObjects, _minSize);
+            Children[i] = new OctreeNode(new Bounds(center + offset, size), _maxObjects, _minSize);
         }
 
         // Redistribute objects
-        List<GameObject> objectsToRedistribute = new List<GameObject>(Objects);
-        Objects.Clear();
-
-        foreach (var obj in objectsToRedistribute)
+        foreach (var fish in Objects)
         {
-            bool placedInChild = false;
+            bool placed = false;
             foreach (var child in Children)
             {
-                if (child.Bounds.Contains(obj.transform.position))
+                if (child.Bounds.Contains(fish.Position))
                 {
-                    child.Objects.Add(obj);
-                    placedInChild = true;
+                    child.Insert(fish);
+                    placed = true;
                     break;
                 }
             }
 
-            // If object doesn't fit in any child, keep in parent
-            if (!placedInChild) Objects.Add(obj);
+            if (!placed)
+            {
+                // If fish doesn't fit in any child, keep in parent
+                Objects.Add(fish);
+            }
         }
+
+        Objects.Clear();
     }
 
-    public void QueryNeighbors(Vector3 point, float radius, List<GameObject> results)
+    public void QueryNeighbors(float3 position, float radius, NativeList<int> results)
     {
         float radiusSqr = radius * radius;
-        Vector3 closestPoint = Bounds.ClosestPoint(point);
-        float sqrDistToBounds = (closestPoint - point).sqrMagnitude;
+        float3 closestPoint = Bounds.ClosestPoint(position);
+        float sqrDistToBounds = math.lengthsq(closestPoint - position);
 
         if (sqrDistToBounds > radiusSqr) return;
 
-        foreach (var obj in Objects)
-        {
-            float sqrDist = (obj.transform.position - point).sqrMagnitude;
-            if (sqrDist <= radiusSqr) results.Add(obj);
-        }
-
         if (Children != null)
         {
             foreach (var child in Children)
             {
-                child.QueryNeighbors(point, radius, results);
+                child.QueryNeighbors(position, radius, results);
             }
         }
-    }
-
-    public bool Remove(GameObject obj)
-    {
-        if (Objects.Remove(obj)) return true;
-
-        if (Children != null)
+        else
         {
-            foreach (var child in Children)
+            foreach (var fish in Objects)
             {
-                if (child.Remove(obj)) return true;
+                float sqrDist = math.lengthsq(fish.Position - position);
+                if (sqrDist <= radiusSqr)
+                {
+                    results.Add(fish.Index);
+                }
             }
-        }
-        return false;
-    }
-
-    public void TryCollapse()
-    {
-        if (Children == null) return;
-
-        int totalObjects = Objects.Count;
-        foreach (var child in Children)
-        {
-            if (child.Children != null) return; // Can't collapse if grandchildren exist
-            totalObjects += child.Objects.Count;
-        }
-
-        if (totalObjects <= _maxObjects)
-        {
-            // Move all child objects to parent
-            foreach (var child in Children)
-            {
-                Objects.AddRange(child.Objects);
-            }
-            Children = null;
         }
     }
 }

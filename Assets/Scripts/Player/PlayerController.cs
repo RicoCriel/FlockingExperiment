@@ -32,7 +32,6 @@ public class PlayerController: MonoBehaviour
         _controller = GetComponent<CharacterController>();
         _inputHandler.MovePerformed += OnMove;
         _inputHandler.LookPerformed += OnLook;
-
     }
 
     private void OnDisable()

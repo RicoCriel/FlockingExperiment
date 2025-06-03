@@ -4,6 +4,7 @@ public class PanelController : MonoBehaviour
 {
     [SerializeField] private GameObject _unlockPanel;
     [SerializeField] private GameObject _controlDiverPanel;
+    [SerializeField] private GameObject[] _allUiElements; 
 
     public void ShowUnlockPanel()
     {

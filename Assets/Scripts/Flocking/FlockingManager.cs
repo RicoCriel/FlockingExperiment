@@ -39,6 +39,17 @@ public class FlockingManager : MonoBehaviour
     private Matrix4x4[] _renderArray;
     private float _lastTickTime;
 
+    public float MaxPopulation { get { return _maxPopulation; } } 
+    public float AlignmentWeight { get { return _alignmentWeight; } }
+    public float CohesionWeight { get { return _cohesionWeight; } }
+    public float SeparationWeight { get { return _seperationWeight; } }
+    public float GoalAttractionStrength { get { return _goalAttractionStrength; } }
+    public (float min, float max) FishCountRange => (0, 100000);
+    public (float min, float max) AlignmentRange => (0, 10);
+    public (float min, float max) CohesionRange => (0, 10);
+    public (float min, float max) SeparationRange => (0, 10);
+    public (float min, float max) DiverAttractionRange => (0, 1);
+
     private void Awake()
     {
         _fishTRS = new List<Matrix4x4>();
@@ -155,6 +166,16 @@ public class FlockingManager : MonoBehaviour
                 yield return null; // Skip frame if behind schedule
         }
     }
+
+    public void SetFishCount(float value)
+    {
+        _maxPopulation = Mathf.RoundToInt(value);
+    }
+
+    public void SetAlignmentWeight(float value) => _alignmentWeight = value;
+    public void SetCohesionWeight(float value) => _cohesionWeight = value;
+    public void SetSeparationWeight(float value) => _seperationWeight = value;
+    public void SetDiverAttraction(float value) => _goalAttractionStrength = value;
 
     private void OnDestroy()
     {

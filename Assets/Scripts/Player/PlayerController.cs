@@ -1,5 +1,4 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof (CharacterController))]
@@ -12,9 +11,7 @@ public class PlayerController: MonoBehaviour
     [Range(0, 5f)]
     [SerializeField] private float _rotationLerpSpeed;
 
-    [SerializeField] private InputActionAsset _inputAsset;
-    private InputAction _moveAction;
-    private InputAction _lookAction;
+    [SerializeField] private InputHandler _inputHandler;
 
     private CharacterController _controller;
     private Vector2 _inputVector;
@@ -26,52 +23,41 @@ public class PlayerController: MonoBehaviour
     private float _pitch;
     private Vector2 _smoothedLook;
 
+    private bool _isEnabled;
+
+    public void SetEnabled(bool enabled) => _isEnabled = enabled;
+
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
-        var actionMap = _inputAsset.FindActionMap("Player"); 
-        _moveAction = actionMap.FindAction("Move");
-        _lookAction = actionMap.FindAction("Look");
+        _inputHandler.MovePerformed += OnMove;
+        _inputHandler.LookPerformed += OnLook;
 
-        _moveAction.performed += OnMove;
-        _moveAction.canceled += OnMove;
-        _lookAction.performed += OnLook;
-        _lookAction.canceled += OnLook;
-    }
-
-    private void OnEnable()
-    {
-        _moveAction.Enable();
-        _lookAction.Enable();
     }
 
     private void OnDisable()
     {
-        _moveAction.Disable();
-        _lookAction.Disable();
-
-        _moveAction.performed -= OnMove;
-        _moveAction.canceled -= OnMove;
-        _lookAction.performed -= OnLook;
-        _lookAction.canceled -= OnLook;
+        _inputHandler.MovePerformed -= OnMove;
+        _inputHandler.LookPerformed -= OnLook;
     }
 
-    private void Update()
+    public void UpdateMovement()
     {
+        if (!_isEnabled) return;
         _smoothedLook = Vector2.Lerp(_smoothedLook, _lookVector, _rotationLerpSpeed * Time.deltaTime);
         ApplyRotation();
         MoveForward();
         KeepWithinBounds();
     }
 
-    public void OnMove(InputAction.CallbackContext context)
+    public void OnMove(Vector2 input)
     {
-        _inputVector = context.ReadValue<Vector2>();
+        _inputVector = input;
     }
 
-    public void OnLook(InputAction.CallbackContext context)
+    public void OnLook(Vector2 input)
     {
-        _lookVector = context.ReadValue<Vector2>();
+        _lookVector = input;
     }
 
     private void ApplyRotation()
@@ -100,10 +86,4 @@ public class PlayerController: MonoBehaviour
 
         _controller.transform.position = pos;
     }
-
-    //private void OnDrawGizmosSelected()
-    //{
-    //    Gizmos.color = Color.yellow;
-    //    Gizmos.DrawWireCube(Vector3.zero, _swimLimits * 2f);
-    //}
 }

@@ -1,28 +1,39 @@
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class ButtonView : MonoBehaviour
 {
-    [SerializeField] private Button _controlsButton;
-    [SerializeField] private GameObject _controlsPanel;
-
-    private bool _buttonClicked;
+    [SerializeField] private Button _settingsButton;
+    [SerializeField] private Button _diverSettingsButton;
+    [SerializeField] private GameObject _settingsPanel;
+    [SerializeField] private GameObject _diverSettingsPanel;
 
     private void OnEnable()
     {
-        _controlsButton.onClick.AddListener(ToggleControlPanel);
+        _settingsButton.onClick.AddListener(ToggleSettingsPanel);
+        _diverSettingsButton.onClick.AddListener(ToggleDiverSettingsPanel);
     }
 
     private void OnDisable()
     {
-        _controlsButton.onClick.RemoveListener(ToggleControlPanel);
+        _settingsButton.onClick.RemoveListener(ToggleSettingsPanel);
+        _diverSettingsButton.onClick.RemoveListener(ToggleDiverSettingsPanel);
     }
 
-    private void ToggleControlPanel()
+    private void ToggleSettingsPanel()
     {
-        _buttonClicked = !_buttonClicked;
-        _controlsPanel.SetActive(_buttonClicked);
+        bool shouldOpen = !_settingsPanel.activeSelf;
+
+        _settingsPanel.SetActive(shouldOpen);
+        _diverSettingsPanel.SetActive(false); 
+    }
+
+    private void ToggleDiverSettingsPanel()
+    {
+        bool shouldOpen = !_diverSettingsPanel.activeSelf;
+
+        _diverSettingsPanel.SetActive(shouldOpen);
+        _settingsPanel.SetActive(false); 
     }
 
 

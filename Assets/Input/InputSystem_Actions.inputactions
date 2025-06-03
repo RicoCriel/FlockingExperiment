@@ -87,9 +87,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "SwitchCam",
+                    "name": "SwitchCamera",
                     "type": "Button",
                     "id": "89445adc-ffca-4764-ab1a-776b7acf37d0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Unlock",
+                    "type": "Button",
+                    "id": "8d298eac-c9a4-4178-ad52-db41b0c59682",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -489,7 +498,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
-                    "action": "SwitchCam",
+                    "action": "SwitchCamera",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -500,7 +509,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Gamepad",
-                    "action": "SwitchCam",
+                    "action": "SwitchCamera",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "db7f1b2d-9925-4584-ac41-2b54dc0d9cb0",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Unlock",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

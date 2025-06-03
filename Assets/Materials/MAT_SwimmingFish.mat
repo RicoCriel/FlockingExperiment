@@ -54,7 +54,7 @@ Material:
     - _Normal_Map_Strengh: 0.25
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _WobbleAmount: 0.1
     - _WobbleDistance: 0.1
     - _WobbleFrequency: 15

@@ -28,14 +28,20 @@ public class SliderView : MonoBehaviour
         UpdateDiverAttractionDisplay(_manager.GoalAttractionStrength);
 
         // Add listeners
-        _fishSlider.onValueChanged.AddListener(UpdateFishCountDisplay);
+        _fishSlider.onValueChanged.AddListener(value => {
+            UpdateFishCountDisplay(Mathf.RoundToInt(value));
+        });
         _alignmentSlider.onValueChanged.AddListener(UpdateAlignmentDisplay);
         _cohesionSlider.onValueChanged.AddListener(UpdateCohesionDisplay);
         _separationSlider.onValueChanged.AddListener(UpdateSeparationDisplay);
         _diverAttractionSlider.onValueChanged.AddListener(UpdateDiverAttractionDisplay);
     }
 
-    public void UpdateFishCountDisplay(float value) => _fishCount.text = value.ToString("N0");
+    public void UpdateFishCountDisplay(float value)
+    {
+        // Cast to int for display
+        _fishCount.text = Mathf.RoundToInt(value).ToString("N0");
+    }
     public void UpdateAlignmentDisplay(float value) => _alignmentFactor.text = value.ToString("F1");
     public void UpdateCohesionDisplay(float value) => _cohesionFactor.text = value.ToString("F1");
     public void UpdateSeparationDisplay(float value) => _separationFactor.text = value.ToString("F1");

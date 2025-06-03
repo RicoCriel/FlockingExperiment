@@ -14,7 +14,7 @@ public class FlockingManager : MonoBehaviour
 
     [Range(0, 1f)][SerializeField] private float _turnSpeed;
     [Range(0, 10f)][SerializeField] private float _moveSpeed;
-    [Range(0, 100000)][SerializeField] private int _maxPopulation;
+    [Range(0, 10000)][SerializeField] private int _maxPopulation;
     [Range(0, 500)][SerializeField] private int _numberOfNeighbors;
     [Range(0, 10f)][SerializeField] private float _schoolRadius;
     [Range(0, 1f)][SerializeField] private float _agility;
@@ -29,22 +29,31 @@ public class FlockingManager : MonoBehaviour
     [SerializeField] private Vector3 _tankCenter;
     [Range(0, 0.5f)][SerializeField] private float _tickDelay;
 
-    private List<Matrix4x4> _fishTRS;
-    private NativeList<Matrix4x4> _fishDataContainer;
-    private JobHandle _handle;
-    private Unity.Mathematics.Random _random;
+    // Fish management
+    private List<Matrix4x4> _fishTRS = new List<Matrix4x4>();
+    private bool _populationDirty;
+    private int _desiredPopulation;
 
+    // Native containers
+    private NativeList<Matrix4x4> _fishDataContainer;
     private NativeArray<Matrix4x4> _previousTRS;
     private NativeArray<Matrix4x4> _interpolatedTRS;
     private Matrix4x4[] _renderArray;
-    private float _lastTickTime;
 
-    public float MaxPopulation { get { return _maxPopulation; } } 
-    public float AlignmentWeight { get { return _alignmentWeight; } }
-    public float CohesionWeight { get { return _cohesionWeight; } }
-    public float SeparationWeight { get { return _seperationWeight; } }
-    public float GoalAttractionStrength { get { return _goalAttractionStrength; } }
-    public (float min, float max) FishCountRange => (0, 100000);
+    // Simulation state
+    private JobHandle _handle;
+    private Unity.Mathematics.Random _random;
+    private float _lastTickTime;
+    private bool _initialized;
+
+    // Public properties for UI access
+    public float MaxPopulation => _maxPopulation;
+    public float AlignmentWeight => _alignmentWeight;
+    public float CohesionWeight => _cohesionWeight;
+    public float SeparationWeight => _seperationWeight;
+    public float GoalAttractionStrength => _goalAttractionStrength;
+
+    public (float min, float max) FishCountRange => (0, 10000);
     public (float min, float max) AlignmentRange => (0, 10);
     public (float min, float max) CohesionRange => (0, 10);
     public (float min, float max) SeparationRange => (0, 10);
@@ -52,36 +61,82 @@ public class FlockingManager : MonoBehaviour
 
     private void Awake()
     {
-        _fishTRS = new List<Matrix4x4>();
+        _random = new Unity.Mathematics.Random((uint)System.DateTime.Now.Millisecond);
+        _desiredPopulation = _maxPopulation;
+        InitializeFishPopulation();
+        StartCoroutine(Tick());
+        _initialized = true;
+    }
 
-        // Initialize NativeArrays for efficient parallel processing
-        _previousTRS = new NativeArray<Matrix4x4>(_maxPopulation, Allocator.Persistent);
-        _interpolatedTRS = new NativeArray<Matrix4x4>(_maxPopulation, Allocator.Persistent);
-        _renderArray = new Matrix4x4[_maxPopulation];
+    private void InitializeFishPopulation()
+    {
+        // Clear any existing fish
+        _fishTRS.Clear();
 
-        for (int i = 0; i < _maxPopulation; i++)
+        // Create initial fish
+        for (int i = 0; i < _desiredPopulation; i++)
         {
-            Vector3 spawnPosition = transform.position + new Vector3(
-                UnityEngine.Random.Range(-_swimLimits.x, _swimLimits.x),
-                UnityEngine.Random.Range(-_swimLimits.y, _swimLimits.y),
-                UnityEngine.Random.Range(-_swimLimits.z, _swimLimits.z));
-
-            var fishMatrix = Matrix4x4.TRS(spawnPosition, Quaternion.identity, Vector3.one);
-            _fishTRS.Add(fishMatrix);
-            _previousTRS[i] = fishMatrix;
-            _interpolatedTRS[i] = fishMatrix;
+            AddFish();
         }
 
-        _random = new Unity.Mathematics.Random(1122);
-        _fishDataContainer = new NativeList<Matrix4x4>(1, Allocator.Persistent);
-        StartCoroutine(Tick());
+        // Initialize native containers
+        UpdateNativeContainers();
+    }
+
+    private void AddFish()
+    {
+        Vector3 spawnPosition = _tankCenter + new Vector3(
+            _random.NextFloat(-_swimLimits.x, _swimLimits.x),
+            _random.NextFloat(-_swimLimits.y, _swimLimits.y),
+            _random.NextFloat(-_swimLimits.z, _swimLimits.z));
+
+        Quaternion randomRotation = Quaternion.Euler(
+            _random.NextFloat(-180f, 180f),
+            _random.NextFloat(-180f, 180f),
+            _random.NextFloat(-180f, 180f)
+        );
+
+        var fishMatrix = Matrix4x4.TRS(spawnPosition, randomRotation, Vector3.one);
+        _fishTRS.Add(fishMatrix);
+    }
+
+    private void UpdateNativeContainers()
+    {
+        // Dispose old containers if they exist
+        if (_previousTRS.IsCreated) _previousTRS.Dispose();
+        if (_interpolatedTRS.IsCreated) _interpolatedTRS.Dispose();
+        if (_fishDataContainer.IsCreated) _fishDataContainer.Dispose();
+
+        // Create new containers with current population size
+        _previousTRS = new NativeArray<Matrix4x4>(_fishTRS.Count, Allocator.Persistent);
+        _interpolatedTRS = new NativeArray<Matrix4x4>(_fishTRS.Count, Allocator.Persistent);
+        _renderArray = new Matrix4x4[_fishTRS.Count];
+        _fishDataContainer = new NativeList<Matrix4x4>(_fishTRS.Count, Allocator.Persistent);
+
+        // Initialize with current fish data
+        for (int i = 0; i < _fishTRS.Count; i++)
+        {
+            _previousTRS[i] = _fishTRS[i];
+            _interpolatedTRS[i] = _fishTRS[i];
+        }
+
+        // Prepare for simulation
+        _fishDataContainer.CopyFrom(_previousTRS);
     }
 
     private void Update()
     {
+        // Handle population changes
+        if (_populationDirty)
+        {
+            _handle.Complete(); // Make sure previous job is done
+            UpdateNativeContainers();
+            _populationDirty = false;
+        }
+
         if (_fishTRS.Count == 0) return;
 
-        // Calculate interpolation factor based on time since last tick
+        // Calculate interpolation factor
         float t = Mathf.Clamp01((Time.time - _lastTickTime) / _tickDelay);
 
         // Create temporary NativeArray for current fish states
@@ -100,16 +155,30 @@ public class FlockingManager : MonoBehaviour
             handle.Complete();
         }
 
-        // Copy interpolated data to managd array for rendering
+        // Copy interpolated data to managed array for rendering
         _interpolatedTRS.CopyTo(_renderArray);
         Graphics.DrawMeshInstanced(_mesh, 0, _material, _renderArray, _fishTRS.Count);
     }
 
     IEnumerator Tick()
     {
+        _handle.Complete();
+
         float nextTickTime = Time.time;
+
         while (true)
         {
+            // Wait for next tick
+            float waitTime = nextTickTime - Time.time;
+            if (waitTime > 0)
+                yield return new WaitForSeconds(waitTime);
+            else
+                yield return null;
+
+            nextTickTime += _tickDelay;
+
+            if (_fishTRS.Count == 0) continue;
+
             // Capture previous state before simulation
             for (int i = 0; i < _fishTRS.Count; i++)
             {
@@ -117,11 +186,8 @@ public class FlockingManager : MonoBehaviour
             }
 
             // Copy data to NativeArray for job processing
-            _fishDataContainer.SetCapacity(_fishTRS.Count);
-            using (NativeArray<Matrix4x4> temp = new NativeArray<Matrix4x4>(_fishTRS.ToArray(), Allocator.TempJob))
-            {
-                _fishDataContainer.CopyFrom(temp);
-            }
+            _fishDataContainer.Clear();
+            _fishDataContainer.CopyFrom(_previousTRS);
 
             // Configure and run the simulation job
             UpdateBehaviourJob job = new UpdateBehaviourJob()
@@ -156,20 +222,29 @@ public class FlockingManager : MonoBehaviour
             }
 
             _lastTickTime = Time.time;
-
-            // Wait for next tick
-            nextTickTime += _tickDelay;
-            float waitTime = nextTickTime - Time.time;
-            if (waitTime > 0)
-                yield return new WaitForSeconds(waitTime);
-            else
-                yield return null; // Skip frame if behind schedule
         }
     }
 
     public void SetFishCount(float value)
     {
-        _maxPopulation = Mathf.RoundToInt(value);
+        if (!_initialized) return;
+
+        int newCount = Mathf.Clamp(Mathf.RoundToInt(value), 0, 10000);
+        if (newCount == _fishTRS.Count) return;
+
+        // Add or remove fish as needed
+        while (_fishTRS.Count < newCount)
+        {
+            AddFish();
+        }
+
+        while (_fishTRS.Count > newCount)
+        {
+            _fishTRS.RemoveAt(_fishTRS.Count - 1);
+        }
+
+        _maxPopulation = newCount;
+        _populationDirty = true;
     }
 
     public void SetAlignmentWeight(float value) => _alignmentWeight = value;
@@ -183,19 +258,10 @@ public class FlockingManager : MonoBehaviour
         _handle.Complete();
 
         // Clean up native collections
-        if (_fishDataContainer.IsCreated)
-            _fishDataContainer.Dispose();
-        if (_previousTRS.IsCreated)
-            _previousTRS.Dispose();
-        if (_interpolatedTRS.IsCreated)
-            _interpolatedTRS.Dispose();
+        if (_fishDataContainer.IsCreated) _fishDataContainer.Dispose();
+        if (_previousTRS.IsCreated) _previousTRS.Dispose();
+        if (_interpolatedTRS.IsCreated) _interpolatedTRS.Dispose();
     }
-
-    //private void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.red;
-    //    Gizmos.DrawWireCube(_tankCenter, _swimLimits * 2);
-    //}
 
     [BurstCompile]
     public struct UpdateBehaviourJob : IJobParallelFor

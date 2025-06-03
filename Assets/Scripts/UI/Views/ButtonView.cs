@@ -13,14 +13,14 @@ public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     public void OnPointerEnter(PointerEventData eventData)
     {
         //To Do: Show ToolTip
-        Debug.Log(_enterMessage);
+        //Debug.Log(_enterMessage);
         OnCursorEnter?.Invoke();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         //To Do: Hide ToolTip
-        Debug.Log(_exitMessage);
+        //Debug.Log(_exitMessage);
         OnCursorExit?.Invoke();
     }
 

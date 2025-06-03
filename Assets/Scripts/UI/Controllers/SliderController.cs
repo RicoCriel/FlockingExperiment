@@ -23,7 +23,7 @@ public class SliderController : MonoBehaviour
     private void Start()
     {
         // Setup slider ranges and initial values
-        InitializeSlider(_fishSlider, _manager.FishCountRange, _manager.MaxPopulation);
+        InitializeFishSlider();
         InitializeSlider(_alignmentSlider, _manager.AlignmentRange, _manager.AlignmentWeight);
         InitializeSlider(_cohesionSlider, _manager.CohesionRange, _manager.CohesionWeight);
         InitializeSlider(_separationSlider, _manager.SeparationRange, _manager.SeparationWeight);
@@ -44,7 +44,22 @@ public class SliderController : MonoBehaviour
         slider.SetValueWithoutNotify(value);
     }
 
-    private void HandleFishCountChanged(float value) => OnFishCountChanged?.Invoke(value);
+    private void InitializeFishSlider()
+    {
+        _fishSlider.minValue = 0;
+        _fishSlider.maxValue = 10000;
+        _fishSlider.wholeNumbers = true;
+        _fishSlider.SetValueWithoutNotify(_manager.MaxPopulation);
+        _fishSlider.onValueChanged.AddListener(HandleFishCountChanged);
+    }
+
+    private void HandleFishCountChanged(float value)
+    {
+        // Round to nearest integer for fish count
+        int intValue = Mathf.RoundToInt(value);
+        OnFishCountChanged?.Invoke(intValue);
+    }
+
     private void HandleAlignmentChanged(float value) => OnAlignmentChanged?.Invoke(value);
     private void HandleCohesionChanged(float value) => OnCohesionChanged?.Invoke(value);
     private void HandleSeparationChanged(float value) => OnSeparationChanged?.Invoke(value);

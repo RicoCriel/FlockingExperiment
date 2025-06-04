@@ -13,12 +13,18 @@ public class SliderController : MonoBehaviour
     public FloatEvent OnSeparationChanged = new FloatEvent();
     public FloatEvent OnDiverAttractionChanged = new FloatEvent();
 
+    public FloatEvent OnDiverSpeedChanged = new FloatEvent();
+    public FloatEvent OnMouseSensitivityChanged = new FloatEvent();
+
     [SerializeField] private Slider _fishSlider;
     [SerializeField] private Slider _alignmentSlider;
     [SerializeField] private Slider _cohesionSlider;
     [SerializeField] private Slider _separationSlider;
     [SerializeField] private Slider _diverAttraction;
     [SerializeField] private FlockingManager _manager;
+
+    [SerializeField] private Slider _diverSpeedSlider;
+    [SerializeField] private Slider _mouseSensitivitySlider;
 
     private void Start()
     {
@@ -28,6 +34,7 @@ public class SliderController : MonoBehaviour
         InitializeSlider(_cohesionSlider, _manager.CohesionRange, _manager.CohesionWeight);
         InitializeSlider(_separationSlider, _manager.SeparationRange, _manager.SeparationWeight);
         InitializeSlider(_diverAttraction, _manager.DiverAttractionRange, _manager.GoalAttractionStrength);
+
 
         // Add listeners after initialization
         _fishSlider.onValueChanged.AddListener(HandleFishCountChanged);
@@ -59,9 +66,10 @@ public class SliderController : MonoBehaviour
         int intValue = Mathf.RoundToInt(value);
         OnFishCountChanged?.Invoke(intValue);
     }
-
     private void HandleAlignmentChanged(float value) => OnAlignmentChanged?.Invoke(value);
     private void HandleCohesionChanged(float value) => OnCohesionChanged?.Invoke(value);
     private void HandleSeparationChanged(float value) => OnSeparationChanged?.Invoke(value);
     private void HandleDiverAttractionChanged(float value) => OnDiverAttractionChanged?.Invoke(value);
+    private void HandleDiverSpeedChanged(float value) => OnDiverSpeedChanged?.Invoke(value);
+    private void HandleMouseSensititvyChanged(float value) => OnMouseSensitivityChanged?.Invoke(value);
 }

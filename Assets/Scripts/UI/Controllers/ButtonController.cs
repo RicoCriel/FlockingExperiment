@@ -9,9 +9,10 @@ public class ButtonController : MonoBehaviour
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _diverSettingsButton;
     [SerializeField] private Button _cameraSwitchButton;
-    [SerializeField] private Button _hideAllUIButton;
+
     [SerializeField] private GameObject _settingsPanel;
     [SerializeField] private GameObject _diverSettingsPanel;
+    [SerializeField] private GameObject _fpsCounterPanel;
 
     public UnityEvent OnCameraButtonClicked;
 
@@ -48,5 +49,12 @@ public class ButtonController : MonoBehaviour
     private void ToggleCameraPov()
     {
         OnCameraButtonClicked?.Invoke();
+    }
+
+    public void ToggleFpsCounter()
+    {
+        bool shouldOpen = !_fpsCounterPanel.activeSelf;
+
+        _fpsCounterPanel.SetActive(shouldOpen);
     }
 }

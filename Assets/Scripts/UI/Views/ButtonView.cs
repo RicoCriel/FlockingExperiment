@@ -6,9 +6,18 @@ public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 {
     [SerializeField] private string _enterMessage;
     [SerializeField] private string _exitMessage;
+    [SerializeField] private bool _shouldBeHighlighted;
 
     public Action OnCursorEnter;
     public Action OnCursorExit;
+
+    private void Awake()
+    {
+        if(_shouldBeHighlighted)
+        {
+
+        }
+    }
 
     public void OnPointerEnter(PointerEventData eventData)
     {

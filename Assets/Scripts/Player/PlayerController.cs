@@ -1,11 +1,13 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController: MonoBehaviour
 {
+    [Header("Diver movement settings")]
     [Range(0,10f)]
     [SerializeField] private float _moveSpeed;
+    [Range(0.1f, 10f)]
+    [SerializeField] private float _mouseSensitivity = 1f;
     [Range(0,180f)]
     [SerializeField] private float _rotationSpeed;
     [Range(0, 5f)]
@@ -22,10 +24,22 @@ public class PlayerController: MonoBehaviour
     private float _yaw;
     private float _pitch;
     private Vector2 _smoothedLook;
-
     private bool _isEnabled;
 
-    public void SetEnabled(bool enabled) => _isEnabled = enabled;
+    public float MoveSpeed
+    {
+        get => _moveSpeed;
+        set => _moveSpeed = Mathf.Clamp(value, 0f, 10f);
+    }
+
+    public float MouseSensitivity
+    {
+        get => _mouseSensitivity;
+        set => _mouseSensitivity = Mathf.Clamp(value, 0.1f, 10f);
+    }
+
+    public (float min, float max) MoveSpeedRange => (0f, 10f);
+    public (float min, float max) MouseSensitivityRange => (0.1f, 10f);
 
     private void Awake()
     {
@@ -39,6 +53,11 @@ public class PlayerController: MonoBehaviour
         _inputHandler.MovePerformed -= OnMove;
         _inputHandler.LookPerformed -= OnLook;
     }
+
+    public void SetMovementSpeed(float value) => MoveSpeed = value;
+    public void SetMouseSensitivity(float value) => MouseSensitivity = value;
+
+    public void SetEnabled(bool enabled) => _isEnabled = enabled;
 
     public void UpdateMovement()
     {
@@ -56,7 +75,7 @@ public class PlayerController: MonoBehaviour
 
     public void OnLook(Vector2 input)
     {
-        _lookVector = input;
+        _lookVector = input * MouseSensitivity;
     }
 
     private void ApplyRotation()
@@ -70,7 +89,7 @@ public class PlayerController: MonoBehaviour
 
     private void MoveForward()
     {
-        Vector3 forward = transform.forward * _inputVector.y * (_moveSpeed * Time.deltaTime);
+        Vector3 forward = transform.forward * _inputVector.y * (MoveSpeed * Time.deltaTime);
         _controller.Move(forward);
     }
 

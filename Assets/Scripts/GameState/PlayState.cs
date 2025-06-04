@@ -17,6 +17,7 @@ internal class PlayState : BaseState
 
     public override void Enter()
     {
+        _panelController.HideIcons();
         _panelController.HideControlDiverPanel();
         _panelController.ShowUnlockPanel();
         _inputHandler.EnableGameplayInput();
@@ -30,6 +31,7 @@ internal class PlayState : BaseState
 
     public override void Exit()
     {
+        _panelController.ShowIcons();
         _panelController.HideUnlockPanel();
         _panelController.ShowControlDiverPanel();
         _playerController.SetEnabled(false);

@@ -9,9 +9,10 @@ using Unity.Mathematics;
 [BurstCompile]
 public class FlockingManager : MonoBehaviour
 {
+    [Header("Flock visuals")]
     [SerializeField] private Mesh _mesh;
     [SerializeField] private Material _material;
-
+    [Header("Flock behaviour settings")]
     [Range(0, 1f)][SerializeField] private float _turnSpeed;
     [Range(0, 10f)][SerializeField] private float _moveSpeed;
     [Range(0, 10000)][SerializeField] private int _maxPopulation;
@@ -25,8 +26,10 @@ public class FlockingManager : MonoBehaviour
     [Range(0, 10f)][SerializeField] private float _visionDistance;
     [SerializeField] private Transform _goal;
     [Range(0, 1f)][SerializeField] private float _goalAttractionStrength;
+    [Header("Flock boundery settings")]
     [SerializeField] private Vector3 _swimLimits;
     [SerializeField] private Vector3 _tankCenter;
+    [Header("Update interval setting")]
     [Range(0, 0.5f)][SerializeField] private float _tickDelay;
 
     // Fish management
@@ -262,6 +265,7 @@ public class FlockingManager : MonoBehaviour
         if (_previousTRS.IsCreated) _previousTRS.Dispose();
         if (_interpolatedTRS.IsCreated) _interpolatedTRS.Dispose();
     }
+    
 
     [BurstCompile]
     public struct UpdateBehaviourJob : IJobParallelFor

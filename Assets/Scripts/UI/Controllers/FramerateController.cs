@@ -4,6 +4,8 @@ using UnityEngine;
 public class FramerateController: MonoBehaviour
 {
     private FramerateView _view;
+    private Coroutine _fpsCoroutine;
+
     private float _fpsCount;
 
     public float FpsCount => _fpsCount;
@@ -13,9 +15,15 @@ public class FramerateController: MonoBehaviour
         _view = GetComponent<FramerateView>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        StartCoroutine(UpdateFps());
+        _fpsCoroutine = StartCoroutine(UpdateFps());
+    }
+
+    private void OnDisable()
+    {
+        if (_fpsCoroutine != null)
+            StopCoroutine(_fpsCoroutine);
     }
 
     private IEnumerator UpdateFps()

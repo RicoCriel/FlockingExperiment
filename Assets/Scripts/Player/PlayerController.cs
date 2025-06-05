@@ -54,7 +54,13 @@ public class PlayerController: MonoBehaviour
         _inputHandler.LookPerformed -= OnLook;
     }
 
-    public void SetMovementSpeed(float value) => MoveSpeed = value;
+    //public void SetMovementSpeed(float value) => MoveSpeed = value;
+    public void SetMovementSpeed(float value)
+    {
+        Debug.Log($"Setting move speed to: {value}");
+        MoveSpeed = value;
+    }
+
     public void SetMouseSensitivity(float value) => MouseSensitivity = value;
 
     public void SetEnabled(bool enabled) => _isEnabled = enabled;

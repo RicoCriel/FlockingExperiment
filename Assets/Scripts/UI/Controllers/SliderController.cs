@@ -4,6 +4,18 @@ using UnityEngine.UI;
 
 public class SliderController : MonoBehaviour
 {
+    [Header("Sliders")]
+    [SerializeField] private Slider _fishSlider;
+    [SerializeField] private Slider _alignmentSlider;
+    [SerializeField] private Slider _cohesionSlider;
+    [SerializeField] private Slider _separationSlider;
+    [SerializeField] private Slider _diverAttraction;
+    [SerializeField] private Slider _diverSpeedSlider;
+    [SerializeField] private Slider _mouseSensitivitySlider;
+    [Header("Behaviour Scripts References")]
+    [SerializeField] private PlayerController _controller;
+    [SerializeField] private FlockingManager _manager;
+
     [System.Serializable]
     public class FloatEvent : UnityEvent<float> { }
 
@@ -16,16 +28,6 @@ public class SliderController : MonoBehaviour
     public FloatEvent OnDiverSpeedChanged = new FloatEvent();
     public FloatEvent OnMouseSensitivityChanged = new FloatEvent();
 
-    [SerializeField] private Slider _fishSlider;
-    [SerializeField] private Slider _alignmentSlider;
-    [SerializeField] private Slider _cohesionSlider;
-    [SerializeField] private Slider _separationSlider;
-    [SerializeField] private Slider _diverAttraction;
-    [SerializeField] private FlockingManager _manager;
-
-    [SerializeField] private Slider _diverSpeedSlider;
-    [SerializeField] private Slider _mouseSensitivitySlider;
-
     private void Start()
     {
         // Setup slider ranges and initial values
@@ -35,6 +37,8 @@ public class SliderController : MonoBehaviour
         InitializeSlider(_separationSlider, _manager.SeparationRange, _manager.SeparationWeight);
         InitializeSlider(_diverAttraction, _manager.DiverAttractionRange, _manager.GoalAttractionStrength);
 
+        InitializeSlider(_diverSpeedSlider, _controller.MoveSpeedRange, _controller.MoveSpeed);
+        InitializeSlider(_mouseSensitivitySlider, _controller.MouseSensitivityRange, _controller.MouseSensitivity);
 
         // Add listeners after initialization
         _fishSlider.onValueChanged.AddListener(HandleFishCountChanged);
@@ -42,6 +46,9 @@ public class SliderController : MonoBehaviour
         _cohesionSlider.onValueChanged.AddListener(HandleCohesionChanged);
         _separationSlider.onValueChanged.AddListener(HandleSeparationChanged);
         _diverAttraction.onValueChanged.AddListener(HandleDiverAttractionChanged);
+
+        _diverSpeedSlider.onValueChanged.AddListener(HandleDiverSpeedChanged);
+        _mouseSensitivitySlider.onValueChanged.AddListener(HandleMouseSensititvyChanged);
     }
 
     private void InitializeSlider(Slider slider, (float min, float max) range, float value)

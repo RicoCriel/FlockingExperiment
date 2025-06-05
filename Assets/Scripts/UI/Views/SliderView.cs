@@ -36,6 +36,9 @@ public class SliderView : MonoBehaviour
         UpdateSeparationDisplay(_manager.SeparationWeight);
         UpdateDiverAttractionDisplay(_manager.GoalAttractionStrength);
 
+        UpdateDiverMoveSpeedDisplay(_controller.MoveSpeed);
+        UpdateMouseSensitivityDisplay(_controller.MouseSensitivity);
+
         // Add listeners
         _fishSlider.onValueChanged.AddListener(value => {
             UpdateFishCountDisplay(Mathf.RoundToInt(value));
@@ -47,6 +50,7 @@ public class SliderView : MonoBehaviour
 
         _moveSpeedSlider.onValueChanged.AddListener(UpdateDiverMoveSpeedDisplay);
         _mouseSensitivitySlider.onValueChanged.AddListener(UpdateMouseSensitivityDisplay);
+
     }
 
     private void OnDisable()
@@ -74,6 +78,6 @@ public class SliderView : MonoBehaviour
     public void UpdateSeparationDisplay(float value) => _separationFactor.text = value.ToString("F1");
     public void UpdateDiverAttractionDisplay(float value) => _diverAttractionFactor.text = value.ToString("F1");
 
-    public void UpdateDiverMoveSpeedDisplay(float value) => _diverMoveSpeed.text = value.ToString("NO");
+    public void UpdateDiverMoveSpeedDisplay(float value) => _diverMoveSpeed.text = value.ToString("F1");
     public void UpdateMouseSensitivityDisplay(float value) => _mouseSensitivity.text = value.ToString("F1");
 }

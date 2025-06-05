@@ -154,7 +154,7 @@ public class FlockingManager : MonoBehaviour
                 T = t
             };
 
-            JobHandle handle = interpolationJob.Schedule(_fishTRS.Count, 64);
+            JobHandle handle = interpolationJob.Schedule(_fishTRS.Count, 8);
             handle.Complete();
         }
 
@@ -214,8 +214,10 @@ public class FlockingManager : MonoBehaviour
                 TankCenter = _tankCenter
             };
 
-            _handle = job.Schedule(_fishTRS.Count, 64);
-            yield return new WaitUntil(() => _handle.IsCompleted);
+            _handle = job.Schedule(_fishTRS.Count, 8);
+            JobHandle.ScheduleBatchedJobs(); // Let Unity process the job in the background
+            _lastTickTime = Time.time;
+            yield return new WaitForSeconds(_tickDelay);
             _handle.Complete();
 
             // Update fish data from job results
@@ -265,7 +267,7 @@ public class FlockingManager : MonoBehaviour
         if (_previousTRS.IsCreated) _previousTRS.Dispose();
         if (_interpolatedTRS.IsCreated) _interpolatedTRS.Dispose();
     }
-    
+
 
     [BurstCompile]
     public struct UpdateBehaviourJob : IJobParallelFor
@@ -423,6 +425,7 @@ public class FlockingManager : MonoBehaviour
         }
     }
 }
+
 
 
 

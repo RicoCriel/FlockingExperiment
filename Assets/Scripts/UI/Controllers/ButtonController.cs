@@ -6,10 +6,11 @@ using UnityEngine.UI;
 
 public class ButtonController : MonoBehaviour
 {
+    [Header("UI Buttons")]
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _diverSettingsButton;
     [SerializeField] private Button _cameraSwitchButton;
-
+    [Header("UI Panels")]
     [SerializeField] private GameObject _settingsPanel;
     [SerializeField] private GameObject _diverSettingsPanel;
     [SerializeField] private GameObject _fpsCounterPanel;

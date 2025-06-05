@@ -22,6 +22,9 @@ public class CameraManager : MonoBehaviour
     public void SwitchCamera()
     {
         _isFreeLookActive = !_isFreeLookActive;
+        //Scrapped due to time constraints
+        //System is there but didnt have time create/source underwater effects
+        //in third person perspective
 
         if (_isFreeLookActive)
         {

@@ -4,6 +4,7 @@ using TMPro;
 
 public class FramerateView : MonoBehaviour
 {
+    [Header("FPS Counter text element")]
     [SerializeField] private TextMeshProUGUI _fpsText;
     private Color _lowFrameRateColor = Color.red;
     private Color _highFrameRateColor = Color.green;

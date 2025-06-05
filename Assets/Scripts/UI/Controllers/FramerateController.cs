@@ -7,7 +7,6 @@ public class FramerateController: MonoBehaviour
     private Coroutine _fpsCoroutine;
 
     private float _fpsCount;
-
     public float FpsCount => _fpsCount;
 
     private void Awake()

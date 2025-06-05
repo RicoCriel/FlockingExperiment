@@ -12,7 +12,7 @@ public class SliderController : MonoBehaviour
     [SerializeField] private Slider _diverAttraction;
     [SerializeField] private Slider _diverSpeedSlider;
     [SerializeField] private Slider _mouseSensitivitySlider;
-    [Header("Behaviour Scripts References")]
+    [Header("Behaviour Script References")]
     [SerializeField] private PlayerController _controller;
     [SerializeField] private FlockingManager _manager;
 

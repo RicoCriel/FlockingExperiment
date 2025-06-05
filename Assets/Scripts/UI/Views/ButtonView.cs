@@ -2,35 +2,31 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using System;
 
-public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,IPointerClickHandler
 {
     [SerializeField] private string _enterMessage;
-    [SerializeField] private string _exitMessage;
-    [SerializeField] private bool _shouldBeHighlighted;
 
-    public Action OnCursorEnter;
-    public Action OnCursorExit;
+    private ToolTipController _toolTipController;
 
-    private void Awake()
+    public void Initialize(ToolTipController controller)
     {
-        if(_shouldBeHighlighted)
-        {
+        _toolTipController = controller;
+    }
 
-        }
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        _toolTipController.HideToolTips();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        //To Do: Show ToolTip
-        //Debug.Log(_enterMessage);
-        OnCursorEnter?.Invoke();
+        _toolTipController.ShowToolTips();
+        _toolTipController.DisplayMessage(_enterMessage);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        //To Do: Hide ToolTip
-        //Debug.Log(_exitMessage);
-        OnCursorExit?.Invoke();
+        _toolTipController.HideToolTips();
     }
 
 

@@ -20,12 +20,12 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _WobbleIntensity
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _Gradient_Texture:
-        m_Texture: {fileID: 2800000, guid: 86974e23226c95b45a608af6baf68891, type: 3}
+        m_Texture: {fileID: 2800000, guid: 82b6fd0c84db2c54d890aec1074d735c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal_Map:
@@ -51,16 +51,19 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha_Clip_Threshold: 0
-    - _Normal_Map_Strengh: 0.25
+    - _Normal_Map_Strengh: 4
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Roughness: 0
     - _Smoothness: 0
-    - _WobbleAmount: 0.1
-    - _WobbleDistance: 0.1
-    - _WobbleFrequency: 15
+    - _WobbleAmount: 14.67
+    - _WobbleDistance: -0.13
+    - _WobbleFrequency: 4
+    - _WobbleIntensity: 0.25
     - _WobbleSpeed: 1
     m_Colors:
     - _Albedo: {r: 1, g: 1, b: 1, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 0}
     - _Vector3: {r: 0.15, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

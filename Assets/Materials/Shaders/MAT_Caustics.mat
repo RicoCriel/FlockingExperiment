@@ -37,7 +37,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 0.65
+    - _Alpha: 1
     - _DecalMeshBiasType: 0
     - _DecalMeshDepthBias: 0
     - _DecalMeshViewBias: 0
@@ -46,7 +46,7 @@ Material:
     - _Offset: 3
     - _Power: 6
     m_Colors:
-    - _Color: {r: 0.83766466, g: 0.9171235, b: 0.9811321, a: 0}
+    - _Color: {r: 0.876691, g: 0.90850836, b: 0.9339623, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &4560713607355387342

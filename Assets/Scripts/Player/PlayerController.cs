@@ -12,13 +12,13 @@ public class PlayerController: MonoBehaviour
     [SerializeField] private float _rotationSpeed;
     [Range(0, 5f)]
     [SerializeField] private float _rotationLerpSpeed;
-
+    [Header("Input component")]
     [SerializeField] private InputHandler _inputHandler;
 
     private CharacterController _controller;
     private Vector2 _inputVector;
     private Vector2 _lookVector;
-
+    [Header("Movement boundary")]
     [SerializeField] private Vector3 _swimLimits;
 
     private float _yaw;
@@ -54,10 +54,9 @@ public class PlayerController: MonoBehaviour
         _inputHandler.LookPerformed -= OnLook;
     }
 
-    //public void SetMovementSpeed(float value) => MoveSpeed = value;
     public void SetMovementSpeed(float value)
     {
-        Debug.Log($"Setting move speed to: {value}");
+        //Debug.Log($"Setting move speed to: {value}");
         MoveSpeed = value;
     }
 

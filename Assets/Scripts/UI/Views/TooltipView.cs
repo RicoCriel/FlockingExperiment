@@ -3,6 +3,7 @@ using TMPro;
 
 public class TooltipView: MonoBehaviour
 {
+    [Header("Tooltip UI components")]
     [SerializeField] private TMP_Text _toolTip;
     [SerializeField] private GameObject _toolTipPanel;
 

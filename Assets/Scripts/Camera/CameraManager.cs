@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
+    [Header("Scene cameras")]
     [SerializeField] private CinemachineCamera _fixedCamera;
     [SerializeField] private CinemachineCamera _freelookCamera;
 
@@ -22,9 +23,6 @@ public class CameraManager : MonoBehaviour
     public void SwitchCamera()
     {
         _isFreeLookActive = !_isFreeLookActive;
-        //Scrapped due to time constraints
-        //System is there but didnt have time create/source underwater effects
-        //in third person perspective
 
         if (_isFreeLookActive)
         {

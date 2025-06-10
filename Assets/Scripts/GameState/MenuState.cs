@@ -51,7 +51,6 @@ internal class MenuState: BaseState
         _stateMachine.TransitionTo(_stateMachine.Factory.Play());
     }
 
-    [System.Obsolete]
     private void AssignToolTipsToButtons()
     {
         var buttons = Object.FindObjectsOfType<ButtonView>();

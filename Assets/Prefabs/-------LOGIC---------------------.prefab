@@ -95,6 +95,7 @@ Transform:
   - {fileID: 1731667223617381222}
   - {fileID: 1725899804734856539}
   - {fileID: 8920525958844043971}
+  - {fileID: 5381810734730092679}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3325265617926329726
@@ -141,7 +142,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a60248659ff27a0418e738d7af7a0aa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _audioManager: {fileID: 2653983334288458580}
+--- !u!1 &4459742308218516032
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5381810734730092679}
+  - component: {fileID: 9151587984749453914}
+  m_Layer: 0
+  m_Name: PropSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5381810734730092679
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4459742308218516032}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -8.43, y: -8.78, z: -21.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4536684624510550553}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9151587984749453914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4459742308218516032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9c62a0a5d76ba345b0d0636822b8c8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _coralPrefabs:
+  - {fileID: 4782576100905352131, guid: cd60da20c7d51e74f8de2023bf8f1789, type: 3}
+  - {fileID: 6362892057496645191, guid: efa0ba2c483210341afe173e87faee54, type: 3}
+  - {fileID: 7164141926869202913, guid: 7879bb587b988134192d6f2d5fd6af0b, type: 3}
+  - {fileID: 8856303625838698080, guid: f9a1be54cfb21ee4a98c71a253745fad, type: 3}
+  - {fileID: 543359200719614953, guid: 324dc5cfdf53a524e8009debb6a97109, type: 3}
+  - {fileID: 2875204685960396133, guid: 649850e049cf05c4b9a8f8987802847a, type: 3}
+  - {fileID: 6237322767195564725, guid: 2939a8765c0229840a5cd9bf383b0a9f, type: 3}
+  - {fileID: 1513815497621626555, guid: 5620fdaf5760bb34bb60afe2bde4bf22, type: 3}
+  - {fileID: 6432494896717317200, guid: 3d41687977ece5246afbe8ac8f2aeb1b, type: 3}
+  - {fileID: 7633981975659255146, guid: 505b4c3ce0d350c4898cbbc4fe3d45df, type: 3}
+  - {fileID: 8775087057154470925, guid: 16fb892e82702914188e0e514bafcd48, type: 3}
+  - {fileID: 5493170116517642039, guid: 720dfce655851d44fa5062fae0d7f344, type: 3}
+  - {fileID: 5493170116517642039, guid: 720dfce655851d44fa5062fae0d7f344, type: 3}
+  - {fileID: 4447111522060885472, guid: 3e579e9aa3a3c8e4393efeb4333fb8e2, type: 3}
+  - {fileID: 923097833914398797, guid: 7f2c5e85cccaed54ba3c3664f043f6d2, type: 3}
+  - {fileID: 5874278995422865029, guid: 21409dfa92eefab4f9e88d901df2f4d8, type: 3}
+  - {fileID: 2957042000061843133, guid: 5603531936b480247a63d286fe2aaaab, type: 3}
+  - {fileID: 525486308429812692, guid: 39895c21c72a33646ac4bfd8e5e8de27, type: 3}
+  - {fileID: 3026946495550866502, guid: 8254be1b5028e114a91e31b7260ce278, type: 3}
+  - {fileID: 5708004155812138595, guid: 986f51fbe1e64f3459480ee274a3c559, type: 3}
+  - {fileID: 569481385414518268, guid: ebf3e458340e5544cb7935a6c3e5154e, type: 3}
+  - {fileID: 466982931611648189, guid: ec896bd0bbce55d4d87f6f6d05c5d7e6, type: 3}
+  - {fileID: 609432171634664810, guid: c9c82b11c209a0d43b65d0a2c463c42e, type: 3}
+  - {fileID: 8305400892397421766, guid: 9e5fdf63c53d0fb449b6729948fcbd64, type: 3}
+  - {fileID: 150227199710265162, guid: af4cb5f9daae9fd4c9ba986edaa152ef, type: 3}
+  _gridWidth: 30
+  _gridDepth: 10
+  _spacing: 5
+  _randomOffset: 0.5
+  _maxRotationX: 10
+  _maxRotationY: 20
 --- !u!1 &8104708631316872478
 GameObject:
   m_ObjectHideFlags: 0
